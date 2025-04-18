@@ -1,7 +1,9 @@
 import React, { Component } from 'react'
 import NewsItems from './NewsItems'
+import Spinner from './Spinner';
 
-export class news extends Component {
+
+export class News extends Component {
   articles = [
     {
       "source": {
@@ -48,30 +50,73 @@ export class news extends Component {
     super();
     this.state = {
       articles: this.articles,
-      loading: false
+      loading: false,
+      page :1
+
     }
   }
 
+  async componentDidMount() {
+   let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=d144c972e0c247249f10d97c8adfb4cb&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+   this.setState({ loading: true })
+    let data = await fetch(url);
+    let parsedData = await data.json()
+    console.log(parsedData);
+    this.setState({ articles: parsedData.articles, totalresults: parsedData.totalResults, loading: false  });
+
+  }
+  handlenextclick = async () => {
+  if(this.state.page+1>Math.ceil(this.state.totalresults/this.props.pageSize)){
+   return;
+  }
+  else{
+    let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=d144c972e0c247249f10d97c8adfb4cb&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+    this.setState({ loading: true })
+    let data = await fetch(url);
+    let parsedData = await data.json()
+    
+    this.setState({
+      articles: parsedData.articles,
+      page: this.state.page + 1,
+      loading: false
+    })
+    console.log("click next")
+  }
+  }
+  handlepreviouclick = async () => {
+    let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=d144c972e0c247249f10d97c8adfb4cb&page=${this.state.page}&pageSize=${this.props.pageSize}`;
+    this.setState({ loading: true })
+    let data = await fetch(url);
+    let parsedData = await data.json()
+    this.setState({
+      articles: parsedData.articles,
+      page: this.state.page - 1,
+      loading: false
+    })
+    console.log("click prec")
+  }
   render() {
     return (
       <div className="container">
-        <h2>New - Top Headlines</h2>
-
-
+        <h2 className='text-center' >New - Top Headlines</h2>
+       
+        <div className="text-center">{this.state.loading&&<Spinner/>}</div>
+        
         <div className='row'>
-          {this.state.articles.map((element) => {
+          {Array.isArray(this.state.articles)&&this.state.articles.map((element) => {
             return (
-              <div className="col-md-3"  key={element.url}>
-                <NewsItems  title={element.title}  dedescription={element.description} imageurl={element.urlToImage} newsUrl={element.url} />
+              <div className="col-md-3 mt-2" key={element.url}>
+                <NewsItems title={element.title} description={element.description} imageurl={element.urlToImage} newsUrl={element.url} />
               </div>)
           })}
-
-
-
+        </div>
+        <div className="container d-flex justify-content-between">
+          <button type="button" disabled={this.state.page <= 1} className="btn btn-dark mt-2 mb-2" onClick={this.handlepreviouclick}> &larr; previous</button>
+          <button type="button" className="btn btn-dark  mt-2 mb-2" onClick={this.handlenextclick} disabled={this.state.page + 1 > Math.ceil(this.state.totalresults / this.props.pageSize)}>next &rarr;</button>
         </div>
       </div>
     )
   }
 }
 
-export default news
+export default News
